@@ -1,0 +1,60 @@
+Here's the modified code to take arguments for video files or webcam, with conditions for selecting ROI and re-initialization:
+```
+import cv2
+import sys
+
+# Get the video source from command line arguments
+if len(sys.argv) > 1:
+	video_source = sys.argv[1]
+else:
+	video_source = 0  # Default to webcam
+
+# Create a video capture object
+cap = cv2.VideoCapture(video_source)
+
+# Check if video capture is successful
+if not cap.isOpened():
+	print("Error opening video stream or file")
+	exit()
+
+# Read the first frame
+ret, frame = cap.read()
+
+# Select the bounding box for the object to track
+if ret:
+	bbox = cv2.selectROI("Frame", frame, False)
+else:
+	exit()
+
+# Create a CSRT tracker object
+tracker = cv2.TrackerCSRT_create()
+
+# Initialize the tracker with the first frame and bounding box
+tracker.init(frame, bbox)
+
+while True:
+	# Read a new frame
+	ret, frame = cap.read()
+
+	# Update the tracker
+	ret, bbox = tracker.update(frame)
+
+	# Draw the bounding box on the frame
+	cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[0]) + int(bbox[2]), int(bbox[1]) + int(bbox[3])), (0, 255, 0), 2)
+
+	# Display the frame
+	cv2.imshow('Frame', frame)
+
+	# Exit on key press
+	key = cv2.waitKey(1) & 0xFF
+	if key == ord('q'):
+		break
+	elif key == ord('r'):  # Re-initialize the tracker
+		bbox = cv2.selectROI("Frame", frame, False)
+		tracker.init(frame, bbox)
+
+# Release the video capture and tracker objects
+cap.release()
+cv2.destroyAllWindows()
+```
+This code takes the video source as a command line argument. If no argument is provided, it defaults to the webcam. It selects the ROI for the first frame and allows re-initialization by pressing the 'r' key. The tracker is updated and the bounding box is drawn on each frame. The video is displayed until the user presses the 'q' key.
